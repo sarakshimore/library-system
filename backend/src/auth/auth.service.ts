@@ -15,7 +15,7 @@ export class AuthService {
   async register(dto: RegisterDto) {
     const hashed = await bcrypt.hash(dto.password, 10);
 
-    const user = await this.prisma.user.create({
+    const admin = await this.prisma.admin.create({
       data: {
         email: dto.email,
         name: dto.name,
@@ -23,26 +23,33 @@ export class AuthService {
       },
     });
 
-    return this.signToken(user.id, user.email);
+    return this.signToken(admin.id, admin.email, admin.name);
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
+    const admin = await this.prisma.admin.findUnique({
       where: { email: dto.email },
     });
 
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!admin) throw new UnauthorizedException('Invalid credentials');
 
-    const valid = await bcrypt.compare(dto.password, user.password);
+    const valid = await bcrypt.compare(dto.password, admin.password);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    return this.signToken(user.id, user.email);
+    return this.signToken(admin.id, admin.email, admin.name);
   }
 
-  private signToken(userId: string, email: string) {
-    const payload = { sub: userId, email };
+  private signToken(adminId: string, email: string, name: string) {
+    const payload = { sub: adminId, email };
+    const token = this.jwt.sign(payload);
+
     return {
-      access_token: this.jwt.sign(payload),
+      token,
+      user: {
+        id: adminId,
+        email,
+        name,
+      },
     };
   }
 }

@@ -7,23 +7,39 @@ import { UpdateBookDto } from './dto/update-book.dto';
 export class BooksService {
   constructor(private readonly prisma: PrismaService) {}
 
-  createBook(dto: CreateBookDto) {
-    return this.prisma.book.create({ data: dto });
+  createBook(dto: CreateBookDto, adminId: string) {
+    return this.prisma.book.create({
+      data: {
+        ...dto,
+        adminId, // Add adminId to the create data
+      },
+    });
   }
 
-  getBooks() {
-    return this.prisma.book.findMany({ include: { author: true } });
+  getBooks(adminId: string) {
+    return this.prisma.book.findMany({
+      where: { adminId }, // Filter by adminId
+      include: { author: true },
+    });
   }
 
-  getBookById(id: string) {
-    return this.prisma.book.findUnique({ where: { id }, include: { author: true } });
+  getBookById(id: string, adminId: string) {
+    return this.prisma.book.findUnique({
+      where: { id, adminId }, // Ensure admin owns this book
+      include: { author: true },
+    });
   }
 
-  updateBook(id: string, dto: UpdateBookDto) {
-    return this.prisma.book.update({ where: { id }, data: dto });
+  updateBook(id: string, dto: UpdateBookDto, adminId: string) {
+    return this.prisma.book.update({
+      where: { id, adminId }, // Ensure admin owns this book
+      data: dto,
+    });
   }
 
-  deleteBook(id: string) {
-    return this.prisma.book.delete({ where: { id } });
+  deleteBook(id: string, adminId: string) {
+    return this.prisma.book.delete({
+      where: { id, adminId }, // Ensure admin owns this book
+    });
   }
 }

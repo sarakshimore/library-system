@@ -1,23 +1,49 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch, // Add this import
+  Post,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto'; // Add this import
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // Create User (Protected)
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() dto: CreateUserDto) {
-    return this.usersService.createUser(dto);
+  create(@Body() dto: CreateUserDto, @Request() req) {
+    const adminId = req.user.adminId;
+    return this.usersService.create(dto, adminId);
   }
 
-  // Get All Users (Protected)
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll() {
-    return this.usersService.getAllUsers();
+  findAll(@Request() req) {
+    const adminId = req.user.adminId;
+    return this.usersService.findAll(adminId);
+  }
+
+  // ADD THIS METHOD
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateUserDto, @Request() req) {
+    const adminId = req.user.adminId;
+    return this.usersService.update(id, dto, adminId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  remove(@Param('id') id: string, @Request() req) {
+    const adminId = req.user.adminId;
+    return this.usersService.remove(id, adminId);
   }
 }

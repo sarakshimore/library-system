@@ -16,4 +16,11 @@ export class AuthController {
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);
   }
+
+  @Post('logout')
+  logout() {
+    // For JWT, logout is handled client-side by removing the token
+    // This endpoint exists for consistency and future use (e.g., token blacklisting)
+    return { message: 'Logged out successfully' };
+  }
 }

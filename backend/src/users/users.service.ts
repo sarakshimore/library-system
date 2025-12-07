@@ -1,46 +1,45 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto'; // Add this import
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-  async createUser(dto: CreateUserDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-
-    if (existing) {
-      throw new ConflictException('User already exists');
-    }
-
-    const hashed = await bcrypt.hash(dto.password, 10);
-
+  create(dto: CreateUserDto, adminId: string) {
     return this.prisma.user.create({
       data: {
         name: dto.name,
         email: dto.email,
-        password: hashed,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
+        phone: dto.phone,
+        adminId,
       },
     });
   }
 
-  getAllUsers() {
+  findAll(adminId: string) {
     return this.prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true,
+      where: { adminId },
+      include: {
+        _count: {
+          select: { borrows: true },
+        },
       },
+    });
+  }
+
+  // ADD THIS METHOD
+  update(id: string, dto: UpdateUserDto, adminId: string) {
+    return this.prisma.user.update({
+      where: { id, adminId }, // Ensure admin owns this user
+      data: dto,
+    });
+  }
+
+  remove(id: string, adminId: string) {
+    return this.prisma.user.delete({
+      where: { id, adminId },
     });
   }
 }
